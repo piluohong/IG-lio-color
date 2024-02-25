@@ -650,8 +650,7 @@ void Process()
       tf::Transform(q_tf, t_tf), odom_msg.header.stamp, "world", "base_link"));
   // publish dense scan
   CloudPtr trans_cloud(new CloudType());
-  pcl::transformPointCloud(
-      *sensor_measurement.cloud_ptr_, *trans_cloud, result_pose);
+  pcl::transformPointCloud( *sensor_measurement.cloud_ptr_, *trans_cloud, result_pose);
   sensor_msgs::PointCloud2 scan_msg;
   pcl::toROSMsg(*trans_cloud, scan_msg);
   scan_msg.header.frame_id = "world";
@@ -901,7 +900,7 @@ int main(int argc, char **argv)
   T_imu_lidar.block<3, 3>(0, 0) =
       Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(
           R_imu_lidar_v.data(), 3, 3);
-  LOG(INFO) << "Extrinsic: " << std::endl
+  LOG(INFO) << "\nExtrinsic: " << std::endl
             << T_imu_lidar << std::endl;
 
   LIO::Config lio_config;

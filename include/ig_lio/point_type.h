@@ -16,25 +16,23 @@
 #include <pcl/search/kdtree.h>
 
              
-struct PointXYZIRGBNormal
-{
-    PCL_ADD_POINT4D;
-    PCL_ADD_INTENSITY;
-    PCL_ADD_RGB;
+// struct PointXYZIRGBNormal
+// {
+//     PCL_ADD_POINT4D;
+//     PCL_ADD_INTENSITY;
+//     PCL_ADD_RGB;
     
-    float curvature;
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-}EIGEN_ALIGN16;
+//     float curvature;
+//     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+// }EIGEN_ALIGN16;
 
-POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIRGBNormal,
-                                    (float,x,x)
-                                    (float,y,y)
-                                    (float,z,z)
-                                    (float ,intensity,intensity)
-                                    (float,r,r)
-                                    (float,g,g)
-                                    (float,b,b)
-                                    (float,curvature,curvature))
+// POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIRGBNormal,
+//                                     (float,x,x)
+//                                     (float,y,y)
+//                                     (float,z,z)
+//                                     (float ,intensity,intensity)
+//                                     (uint_32t,rgb,rgb)
+//                                     (float,curvature,curvature))
 
 // using PointType = PointXYZIRGBNormal;
 using PointType = pcl::PointXYZRGBNormal;

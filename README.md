@@ -2,19 +2,19 @@
 
 ## 感谢ig-lio作者的开源
 #本项工作 基于ig-lio紧耦合激光惯性里程计包构建彩色点云地图，未进行严格的时间同步。
+
 #TODO
 ·增加后端优化；
 ·严格激光帧和相机帧的同步时间；
-#测试效果
 
+#测试效果
 Dataset : hku_main_building
 ![Alt text](figures/hku_main_building.png)
 ![Alt text](figures/hku_main_building_2.png)
 Dataset: hku_park_00
 ![Alt text](figures/hku_park_00.png)
 
-  
-
+//原作者README.md
 This work proposes an incremental Generalized Iterative Closest Point (GICP) based tightly-coupled LiDAR-inertial odometry (LIO), iG-LIO, which addresses the challenges of integrating GICP into real-time LIO. The main contributions are as follows.
 
 - The raw GICP constraints are tightly-coupled with IMU constraints in a Maximum A Posteriori (MAP) estimation.
