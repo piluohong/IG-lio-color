@@ -153,28 +153,31 @@ void CalibrationData()
 }
 
 
-void ImageCallback(const sensor_msgs::ImageConstPtr &image_msg)
+void ImageCallback(const sensor_msgs::Image::ConstPtr &image_msg)
 {
+    timer.Evaluate(
+      [&]()
+    {
+        // 相机数据打包
+        ros::Time image_time = image_msg->header.stamp;
+        double cur_image_time = image_time.toSec();
 
-  // 数据打包
-  
-  ros::Time image_time = image_msg->header.stamp;
-  double cur_image_time = image_time.toSec();
+        cv::Mat cv_image;
+        // ROS_Image -> OpenCV_Image
+        cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::RGB8);
+        cv_image = cv_ptr->image;
 
-  cv::Mat cv_image;
-  // ROS_Image -> OpenCV_Image
-  cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::RGB8);
-  cv_image = cv_ptr->image;
+        // 图像去畸变
+        cv::Mat map1, map2;
+        cv::Size imageSize = cv_image.size();
+        cv::initUndistortRectifyMap(intrisic, distCoeffs, cv::Mat(), cv::getOptimalNewCameraMatrix(intrisic, distCoeffs, imageSize, 1, imageSize, 0), imageSize, CV_16SC2, map1, map2);
+        cv::remap(cv_image, cv_image, map1, map2, cv::INTER_LINEAR); // correct the distortion
 
-  // 图像去畸变
-  cv::Mat map1, map2;
-  cv::Size imageSize = cv_image.size();
-  cv::initUndistortRectifyMap(intrisic, distCoeffs, cv::Mat(), cv::getOptimalNewCameraMatrix(intrisic, distCoeffs, imageSize, 1, imageSize, 0), imageSize, CV_16SC2, map1, map2);
-  cv::remap(cv_image, cv_image, map1, map2, cv::INTER_LINEAR); // correct the distortion
-
-  std::lock_guard<std::mutex> lock(mtx_lidar);
-  image_buff.push_back(std::make_pair(cv_image, cur_image_time));
-  // ROS_WARN("*******\n");
+        std::lock_guard<std::mutex> lock(mtx_lidar);
+        image_buff.push_back(std::make_pair(cv_image, cur_image_time));
+        // ROS_WARN("*******\n");
+    },
+    "Picture Preprocess (RGB)");
 }
 
 void ImuCallBack(const sensor_msgs::Imu::ConstPtr &msg_ptr)
@@ -275,7 +278,7 @@ void LivoxCloudCallBack(const livox_ros_driver2::CustomMsg::ConstPtr &msg)
   image_buff.pop_back();
   mtx_lidar.unlock();
 
-  ROS_WARN("Debug: %d\n",(int)show_image.empty());
+  // ROS_WARN("Debug: %d\n",(int)show_image.empty());
   
   timer.Evaluate(
       [&]()

@@ -6,7 +6,13 @@
 ·增加后端优化；
 ·严格激光帧和相机帧的同步时间；
 #测试效果
-![Alt text](figures/%E6%B7%B1%E5%BA%A6%E6%88%AA%E5%9B%BE_%E9%80%89%E6%8B%A9%E5%8C%BA%E5%9F%9F_20240225150044.png)
+
+Dataset : hku_main_building
+![Alt text](figures/hku_main_building.png)
+![Alt text](figures/hku_main_building_2.png)
+Dataset: hku_park_00
+![Alt text](figures/hku_park_00.png)
+
   
 
 This work proposes an incremental Generalized Iterative Closest Point (GICP) based tightly-coupled LiDAR-inertial odometry (LIO), iG-LIO, which addresses the challenges of integrating GICP into real-time LIO. The main contributions are as follows.

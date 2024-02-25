@@ -58,13 +58,14 @@ void PointCloudPreprocess::Process(
 
 #pragma omp parallel for num_threads(omp_get_max_threads())
   for (size_t i = 0; i < msg->point_num; ++i) {
-    //对数据进行筛选
+    // 对数据进行筛选
     // if ((msg->points[i].line < num_scans_) &&
     //     ((msg->points[i].tag & 0x30) == 0x10 ||
     //      (msg->points[i].tag & 0x30) == 0x00) &&
     //     !HasInf(msg->points[i]) && !HasNan(msg->points[i]) &&
     //     !IsNear(msg->points[i], msg->points[i - 1]) &&
     //     (i % config_.point_filter_num == 0))
+    if (i % config_.point_filter_num == 0)
      {
 
       //2.转换到相机系
@@ -110,7 +111,7 @@ void PointCloudPreprocess::Process(
   }
   //5.雷达视角
 //  pcl::transformPointCloud(*cloud_out,*cloud_out,exT);
- std::cout << ">>>> color points nums: " << cloud_out->points.size() << std::endl;
+ std::cout << ">>>> Color points nums: " << cloud_out->points.size() << std::endl;
 }
 
 void PointCloudPreprocess::Process(
@@ -240,7 +241,7 @@ void PointCloudPreprocess::ProcessOuster(
       point.b = 0;
       // point.intensity = cloud_origin.at(i).intensity;
       // ms
-      point.curvature = cloud_origin.at(i).t * 1e-6;
+      point.curvature = cloud_origin.at(i).t * 1e-6; //ms
       cloud_out->push_back(point);
     }
   }
