@@ -331,11 +331,9 @@ void LivoxCloudCallBack(const livox_ros_driver2::CustomMsg::ConstPtr &msg)
             first_scan_flag = false;
           }
 
-          
-          image = show_image.clone();
-          if (image.empty() || abs(lidar_timestamp - image_time) > 0.05)
+          if (show_image.empty() || abs(lidar_timestamp - image_time) > 0.05)
                     return;
-          
+          image = show_image.clone();
           cloud_preprocess_ptr->Process(
               msg, temp_cloud_ptr, image, show_image, intrisicMat, transOffset, first_scan_timestamp);
 

@@ -59,54 +59,53 @@ void PointCloudPreprocess::Process(
 #pragma omp parallel for num_threads(omp_get_max_threads())
   for (size_t i = 0; i < msg->point_num; ++i) {
     // 对数据进行筛选
-    // if ((msg->points[i].line < num_scans_) &&
-    //     ((msg->points[i].tag & 0x30) == 0x10 ||
-    //      (msg->points[i].tag & 0x30) == 0x00) &&
-    //     !HasInf(msg->points[i]) && !HasNan(msg->points[i]) &&
-    //     !IsNear(msg->points[i], msg->points[i - 1]) &&
-    //     (i % config_.point_filter_num == 0))
-    if (i % config_.point_filter_num == 0)
+    if ((msg->points[i].line < num_scans_) && (i % config_.point_filter_num == 0) &&
+       ((msg->points[i].tag & 0x30) == 0x10 ||
+       (msg->points[i].tag & 0x30) == 0x00) &&
+        !HasInf(msg->points[i]) && !HasNan(msg->points[i]) &&
+        !IsNear(msg->points[i], msg->points[i - 1]))
      {
+        //2.转换到相机系
+        Eigen::Vector3f pt(msg->points[i].x, msg->points[i].y, msg->points[i].z);
+        livox_pt = T * pt;
+      
+        X.at<double>(0,0) = livox_pt(0);
+        X.at<double>(1,0) = livox_pt(1);
+        X.at<double>(2,0) = livox_pt(2);
+        X.at<double>(3,0) = 1;
 
-      //2.转换到相机系
-      Eigen::Vector3f pt(msg->points[i].x, msg->points[i].y, msg->points[i].z);
-      livox_pt = T * pt;
-    
-      X.at<double>(0,0) = livox_pt(0);
-      X.at<double>(1,0) = livox_pt(1);
-      X.at<double>(2,0) = livox_pt(2);
-      X.at<double>(3,0) = 1;
+        //3.转换到像素坐标系
+        Y = intrisicMat  * X; 
+        cv::Point2f u_v;
+        u_v.x = Y.at<double>(0, 0) / Y.at<double>(2, 0);
+        u_v.y = Y.at<double>(1, 0) / Y.at<double>(2, 0);
 
-      //3.转换到像素坐标系
-      Y = intrisicMat  * X; 
-      cv::Point2f u_v;
-      u_v.x = Y.at<double>(0, 0) / Y.at<double>(2, 0);
-      u_v.y = Y.at<double>(1, 0) / Y.at<double>(2, 0);
+        if(u_v.x < 0 || u_v.y < 0 || u_v.x > image_in.cols || u_v.y > image_in.rows)
+                continue;
+      #pragma omp critical
+      {
+          PointType point;
+          point.normal_x = 0;
+          point.normal_y = 0;
+          point.normal_z = 0;
+          point.x = msg->points[i].x;
+          point.y = msg->points[i].y;
+          point.z = msg->points[i].z;
+          point.r = image_in.at<cv::Vec3b>(u_v.y,u_v.x)[0]; //(row,col)
+          point.g =image_in.at<cv::Vec3b>(u_v.y,u_v.x)[1];
+          point.b =image_in.at<cv::Vec3b>(u_v.y,u_v.x)[2];
+          // point.intensity = msg->points[i].reflectivity;
+          point.curvature = time_offset + msg->points[i].offset_time * 1e-6;  // ms
+          cloud_out->push_back(point);
 
-      if(u_v.x < 0 || u_v.y < 0 || u_v.x > image_in.cols || u_v.y > image_in.rows)
-              continue;
-    #pragma omp critical
-     {
-        PointType point;
-        point.normal_x = 0;
-        point.normal_y = 0;
-        point.normal_z = 0;
-        point.x = msg->points[i].x;
-        point.y = msg->points[i].y;
-        point.z = msg->points[i].z;
-        point.r = image_in.at<cv::Vec3b>(u_v.y,u_v.x)[0]; //(row,col)
-        point.g =image_in.at<cv::Vec3b>(u_v.y,u_v.x)[1];
-        point.b =image_in.at<cv::Vec3b>(u_v.y,u_v.x)[2];
-        // point.intensity = msg->points[i].reflectivity;
-        point.curvature = time_offset + msg->points[i].offset_time * 1e-6;  // ms
-        cloud_out->push_back(point);
-
-        //4.融合图片
-        float dist,r,g,b;
-        dist = pointDistance(point);
-        getColor(dist,50,r,g,b);
-        cv::circle(image_out, cv::Point2f(u_v.x,u_v.y), 0, cv::Scalar(r, g, b),5);
+          //4.融合图片
+          float dist,r,g,b;
+          dist = pointDistance(point);
+          getColor(dist,50,r,g,b);
+          cv::circle(image_out, cv::Point2f(u_v.x,u_v.y), 0, cv::Scalar(r, g, b),5);
       }
+    }else{
+      continue;
     }
   }
   //5.雷达视角

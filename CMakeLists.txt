@@ -34,7 +34,6 @@ find_package(glog REQUIRED)
 find_package(OpenCV 4 REQUIRED)
 find_package(OpenMP REQUIRED)
 
-
 include(FindOpenMP)
 if(OPENMP_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -64,13 +63,15 @@ include_directories(
   include 
 )
 
+# link includefile
 include_directories(SYSTEM
   ${catkin_INCLUDE_DIRS}	
   ${PCL_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
 
-link_directories(${PCL_LIBRARY_DIRS} ${OpenMP_CXX_FLAGS})
+#link .so
+link_directories(${PCL_LIBRARY_DIRS} ${OpenMP_CXX_FLAGS}) 
 
 
 add_executable(${PROJECT_NAME}_node 
