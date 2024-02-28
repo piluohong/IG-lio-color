@@ -53,8 +53,6 @@ void PointCloudPreprocess::Process(
     Eigen::Vector3f livox_pt;
     cv::Mat X(4, 1, cv::DataType<double>::type);
     cv::Mat Y(3, 1, cv::DataType<double>::type);
-    //cam->lidar 的config参数 需要求逆
-    Eigen::Affine3f T = exT.inverse();
 
 #pragma omp parallel for num_threads(omp_get_max_threads())
   for (size_t i = 0; i < msg->point_num; ++i) {
@@ -67,7 +65,7 @@ void PointCloudPreprocess::Process(
      {
         //2.转换到相机系
         Eigen::Vector3f pt(msg->points[i].x, msg->points[i].y, msg->points[i].z);
-        livox_pt = T * pt;
+        livox_pt = exT * pt;
       
         X.at<double>(0,0) = livox_pt(0);
         X.at<double>(1,0) = livox_pt(1);

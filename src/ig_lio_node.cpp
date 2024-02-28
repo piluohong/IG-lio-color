@@ -64,44 +64,46 @@ static cv::Mat intrisicMat(3, 4, cv::DataType<double>::type); // 内参3*4的投
 static cv::Mat intrisic(3, 3, cv::DataType<double>::type);    // 内参3*3矩阵
 static cv::Mat distCoeffs(5, 1, cv::DataType<double>::type);  // 畸变向量
 static Eigen::Affine3f transOffset;
-// static Eigen::Affine3f transOffset_inv;
 std::mutex mtx_lidar;
 std::condition_variable cv_lidar;
 
-std::vector<std::pair<cv::Mat, double>> image_buff;
+double image_time;
+cv::Mat image, show_image;
+sensor_msgs::Image::ConstPtr image_ros;
+std::vector<std::pair<sensor_msgs::Image::ConstPtr, double>> image_buff;
 
 void CalibrationData()
 {
-  // hku1.bag -> config lidar->cam
-  // extrinsicMat_RT(0, 0) = 0.00162756;
-  // extrinsicMat_RT(0, 1) = -0.999991;
-  // extrinsicMat_RT(0, 2) = 0.00390957;
-  // extrinsicMat_RT(0, 3) = 0.0409257;
-  // extrinsicMat_RT(1, 0) = -0.0126748;
-  // extrinsicMat_RT(1, 1) = -0.00392989;
-  // extrinsicMat_RT(1, 2) = -0.999912;
-  // extrinsicMat_RT(1, 3) = 0.0318424;
-  // extrinsicMat_RT(2, 0) = 0.999918;
-  // extrinsicMat_RT(2, 1) = 0.00157786;
-  // extrinsicMat_RT(2, 2) = -0.012681;
-  // extrinsicMat_RT(2, 3) = -0.0927219;
-  // extrinsicMat_RT(3, 0) = 0.0;
-  // extrinsicMat_RT(3, 1) = 0.0;
-  // extrinsicMat_RT(3, 2) = 0.0;
-  // extrinsicMat_RT(3, 3) = 1.0;
+  // hku1.bag -> config cam->lidar
+  extrinsicMat_RT(0, 0) = 0.00162756;
+  extrinsicMat_RT(0, 1) = -0.999991;
+  extrinsicMat_RT(0, 2) = 0.00390957;
+  extrinsicMat_RT(0, 3) = 0.0409257;
+  extrinsicMat_RT(1, 0) = -0.0126748;
+  extrinsicMat_RT(1, 1) = -0.00392989;
+  extrinsicMat_RT(1, 2) = -0.999912;
+  extrinsicMat_RT(1, 3) = 0.0318424;
+  extrinsicMat_RT(2, 0) = 0.999918;
+  extrinsicMat_RT(2, 1) = 0.00157786;
+  extrinsicMat_RT(2, 2) = -0.012681;
+  extrinsicMat_RT(2, 3) = -0.0927219;
+  extrinsicMat_RT(3, 0) = 0.0;
+  extrinsicMat_RT(3, 1) = 0.0;
+  extrinsicMat_RT(3, 2) = 0.0;
+  extrinsicMat_RT(3, 3) = 1.0;
 
-  // intrisicMat.at<double>(0, 0) =  863.590518437255;
-  // intrisicMat.at<double>(0, 1) = 0.000000e+00;
-  // intrisicMat.at<double>(0, 2) =  621.666074631063;
-  // intrisicMat.at<double>(0, 3) = 0.000000e+00;
-  // intrisicMat.at<double>(1, 0) = 0.000000e+00;
-  // intrisicMat.at<double>(1, 1) =  863.100180533059;
-  // intrisicMat.at<double>(1, 2)  = 533.971978652819;
-  // intrisicMat.at<double>(1, 3) = 0.000000e+00;
-  // intrisicMat.at<double>(2, 0) = 0.000000e+00;
-  // intrisicMat.at<double>(2, 1) = 0.000000e+00;
-  // intrisicMat.at<double>(2, 2) = 1.000000e+00;
-  // intrisicMat.at<double>(2, 3) = 0.000000e+00;
+  intrisicMat.at<double>(0, 0) =  863.590518437255;
+  intrisicMat.at<double>(0, 1) = 0.000000e+00;
+  intrisicMat.at<double>(0, 2) =  621.666074631063;
+  intrisicMat.at<double>(0, 3) = 0.000000e+00;
+  intrisicMat.at<double>(1, 0) = 0.000000e+00;
+  intrisicMat.at<double>(1, 1) =  863.100180533059;
+  intrisicMat.at<double>(1, 2)  = 533.971978652819;
+  intrisicMat.at<double>(1, 3) = 0.000000e+00;
+  intrisicMat.at<double>(2, 0) = 0.000000e+00;
+  intrisicMat.at<double>(2, 1) = 0.000000e+00;
+  intrisicMat.at<double>(2, 2) = 1.000000e+00;
+  intrisicMat.at<double>(2, 3) = 0.000000e+00;
 
   // hku_main_building -> config cam->lidar
   extrinsicMat_RT(0, 0) = -0.00113207;
@@ -148,10 +150,31 @@ void CalibrationData()
   transOffset.linear() = linearPart;
   transOffset.translation() = translation;
 
-  // transOffset = transOffset.inverse();
+  //hku_main_building dataset
+  transOffset = transOffset.inverse();
 
 }
 
+/*opencv*/
+void ros2cv(const sensor_msgs::Image::ConstPtr &image_ros,cv::Mat &image,cv::Mat &intrisic,cv::Mat &distCoeffs,bool corr)
+{
+    // ROS_Image -> OpenCV_Image
+    cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(image_ros, sensor_msgs::image_encodings::RGB8);
+    image = cv_ptr->image;
+
+    if (corr)
+    {
+      /* code */
+      // 图像去畸变
+      cv::Mat map1, map2;
+      cv::Size imageSize = image.size();
+      cv::initUndistortRectifyMap(intrisic, distCoeffs, cv::Mat(), cv::getOptimalNewCameraMatrix(intrisic, distCoeffs, imageSize, 1, imageSize, 0), imageSize, CV_16SC2, map1, map2);
+      cv::remap(image, image, map1, map2, cv::INTER_LINEAR); // correct the distortion
+
+    }
+    
+    return;
+}
 
 void ImageCallback(const sensor_msgs::Image::ConstPtr &image_msg)
 {
@@ -162,19 +185,9 @@ void ImageCallback(const sensor_msgs::Image::ConstPtr &image_msg)
         ros::Time image_time = image_msg->header.stamp;
         double cur_image_time = image_time.toSec();
 
-        cv::Mat cv_image;
-        // ROS_Image -> OpenCV_Image
-        cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::RGB8);
-        cv_image = cv_ptr->image;
-
-        // 图像去畸变
-        cv::Mat map1, map2;
-        cv::Size imageSize = cv_image.size();
-        cv::initUndistortRectifyMap(intrisic, distCoeffs, cv::Mat(), cv::getOptimalNewCameraMatrix(intrisic, distCoeffs, imageSize, 1, imageSize, 0), imageSize, CV_16SC2, map1, map2);
-        cv::remap(cv_image, cv_image, map1, map2, cv::INTER_LINEAR); // correct the distortion
-
         std::lock_guard<std::mutex> lock(mtx_lidar);
-        image_buff.push_back(std::make_pair(cv_image, cur_image_time));
+        image_buff.push_back(std::make_pair(image_msg, cur_image_time));
+        
         // ROS_WARN("*******\n");
     },
     "Picture Preprocess (RGB)");
@@ -267,18 +280,6 @@ void LivoxCloudCallBack(const livox_ros_driver2::CustomMsg::ConstPtr &msg)
   static CloudPtr temp_cloud_ptr(new CloudType());
   static bool first_scan_flag = true;
   static double first_scan_timestamp = 0.0;
-
-  // 提取相机回调函数的结果
-  // double image_time;
-  // cv::Mat image, show_image;
-  
-  // mtx_lidar.lock();
-  // show_image = image_buff.back().first;
-  // image_time = image_buff.back().second;
-  // image_buff.pop_back();
-  // mtx_lidar.unlock();
-
-  // ROS_WARN("Debug: %d\n",(int)show_image.empty());
   
   timer.Evaluate(
       [&]()
@@ -331,12 +332,25 @@ void LivoxCloudCallBack(const livox_ros_driver2::CustomMsg::ConstPtr &msg)
             first_scan_flag = false;
           }
 
-          // if (show_image.empty() || abs(lidar_timestamp - image_time) > 0.05)
-          //           return;
-          // image = show_image.clone();
-          // cloud_preprocess_ptr->Process(
-          //     msg, temp_cloud_ptr, image, show_image, intrisicMat, transOffset, first_scan_timestamp);
-          cloud_preprocess_ptr->Process(msg, temp_cloud_ptr, first_scan_timestamp);
+          {
+            //提取相机回调函数的结果
+            mtx_lidar.lock();
+            image_ros = image_buff.back().first;
+            image_time = image_buff.back().second;
+            // image_buff.pop_back();
+            mtx_lidar.unlock();
+            
+            ros2cv(image_ros,show_image,intrisic,distCoeffs,false);
+            ROS_WARN("Debug: %d\n",(int)show_image.empty());
+
+            if (show_image.empty())//|| abs(lidar_timestamp - image_time) > 0.1)
+                      return;
+            image = show_image.clone();
+          }
+
+          cloud_preprocess_ptr->Process(
+              msg, temp_cloud_ptr, image, show_image, intrisicMat, transOffset, first_scan_timestamp);
+          // cloud_preprocess_ptr->Process(msg, temp_cloud_ptr, first_scan_timestamp);
 
           first_scan_flag = true;
           last_lidar_timestamp = lidar_timestamp;
@@ -346,12 +360,12 @@ void LivoxCloudCallBack(const livox_ros_driver2::CustomMsg::ConstPtr &msg)
           temp_cloud_ptr->clear();
 
             //6.发布融合图片
-          //    cv_bridge::CvImage bridge;
-          //   bridge.image = show_image;
-          //   bridge.encoding = "rgb8";
-          //   sensor_msgs::Image::Ptr imageShowPointer = bridge.toImageMsg();
-          //   imageShowPointer->header.stamp = ros::Time::now();
-          //  fusion_image_pub.publish(imageShowPointer);
+            cv_bridge::CvImage bridge;
+            bridge.image = show_image;
+            bridge.encoding = "rgb8";
+            sensor_msgs::Image::Ptr imageShowPointer = bridge.toImageMsg();
+            imageShowPointer->header.stamp = ros::Time::now();
+           fusion_image_pub.publish(imageShowPointer);
         }
       },
       "Cloud Preprocess (Livox)");
@@ -801,8 +815,8 @@ int main(int argc, char **argv)
   ros::Subscriber image_sub;
   if (lidar_type == LidarType::LIVOX)
   {
-    // image_sub = nh.subscribe("/camera/image", 10000, ImageCallback, ros::TransportHints().tcpNoDelay());
-    cloud_sub = nh.subscribe(lidar_topic, 10000, LivoxCloudCallBack, ros::TransportHints().tcpNoDelay());
+    image_sub = nh.subscribe("/camera/image", 1000, ImageCallback,ros::TransportHints().tcpNoDelay());
+    cloud_sub = nh.subscribe(lidar_topic, 1000, LivoxCloudCallBack,ros::TransportHints().tcpNoDelay());
   }
   else
   {

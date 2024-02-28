@@ -3,7 +3,7 @@
 
     <node pkg="ig_lio" type="ig_lio_node" name="ig_lio_node" output="screen" />
     
-    <node ns = "hong_test" pkg="image_transport" type="republish" name="image_republish" args="compressed in:=/camera/image_color  raw out:=/camera/image" output="screen" respawn="true"/>
+    <node ns = "hong_test" pkg="image_transport" type="republish" name="image_republish" args="compressed in:=/left_camera/image  raw out:=/camera/image" output="screen" respawn="true"/>
     
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find ig_lio)/rviz/lio_show.rviz" required="true" />
 </launch>
