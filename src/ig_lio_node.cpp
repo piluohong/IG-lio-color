@@ -67,7 +67,7 @@ static Eigen::Affine3f transOffset;
 std::mutex mtx_lidar;
 std::condition_variable cv_lidar;
 
-double image_time;
+double image_time = 0.0;
 cv::Mat image, show_image;
 sensor_msgs::Image::ConstPtr image_ros;
 std::vector<std::pair<sensor_msgs::Image::ConstPtr, double>> image_buff;
@@ -334,16 +334,18 @@ void LivoxCloudCallBack(const livox_ros_driver2::CustomMsg::ConstPtr &msg)
 
           {
             //提取相机回调函数的结果
+           
             mtx_lidar.lock();
             image_ros = image_buff.back().first;
             image_time = image_buff.back().second;
             // image_buff.pop_back();
             mtx_lidar.unlock();
             
+            
             ros2cv(image_ros,show_image,intrisic,distCoeffs,false);
-            ROS_WARN("Debug: %d\n",(int)show_image.empty());
+            // ROS_WARN("Debug: %d\n",(int)show_image.empty());
 
-            if (show_image.empty())//|| abs(lidar_timestamp - image_time) > 0.1)
+            if (show_image.empty()||abs(lidar_timestamp - image_time) > 0.1)
                       return;
             image = show_image.clone();
           }
@@ -815,8 +817,8 @@ int main(int argc, char **argv)
   ros::Subscriber image_sub;
   if (lidar_type == LidarType::LIVOX)
   {
-    image_sub = nh.subscribe("/camera/image", 1000, ImageCallback,ros::TransportHints().tcpNoDelay());
-    cloud_sub = nh.subscribe(lidar_topic, 1000, LivoxCloudCallBack,ros::TransportHints().tcpNoDelay());
+    image_sub = nh.subscribe("/camera/image", 10000, ImageCallback,ros::TransportHints().tcpNoDelay());
+    cloud_sub = nh.subscribe(lidar_topic, 10000, LivoxCloudCallBack,ros::TransportHints().tcpNoDelay());
   }
   else
   {
