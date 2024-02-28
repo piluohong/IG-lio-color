@@ -85,17 +85,18 @@ void PointCloudPreprocess::Process(
       #pragma omp critical
       {
           PointType point;
-          point.normal_x = 0;
-          point.normal_y = 0;
-          point.normal_z = 0;
-          point.x = msg->points[i].x;
-          point.y = msg->points[i].y;
-          point.z = msg->points[i].z;
-          point.r = image_in.at<cv::Vec3b>(u_v.y,u_v.x)[0]; //(row,col)
-          point.g =image_in.at<cv::Vec3b>(u_v.y,u_v.x)[1];
-          point.b =image_in.at<cv::Vec3b>(u_v.y,u_v.x)[2];
-          // point.intensity = msg->points[i].reflectivity;
-          point.curvature = time_offset + msg->points[i].offset_time * 1e-6;  // ms
+          PointXYZIRGBNormal point_i;
+          point_i.normal_x = point.normal_x = 0;
+          point_i.normal_x = point.normal_y = 0;
+          point_i.normal_x = point.normal_z = 0;
+          point_i.x = point.x = msg->points[i].x;
+          point_i.y = point.y = msg->points[i].y;
+          point_i.z = point.z = msg->points[i].z;
+          point_i.r = point.r = image_in.at<cv::Vec3b>(u_v.y,u_v.x)[0]; //(row,col)
+          point_i.g = point.g = image_in.at<cv::Vec3b>(u_v.y,u_v.x)[1];
+          point_i.b = point.b = image_in.at<cv::Vec3b>(u_v.y,u_v.x)[2];
+          point_i.intensity = msg->points[i].reflectivity;
+          point_i.curvature = point.curvature = time_offset + msg->points[i].offset_time * 1e-6;  // ms
           cloud_out->push_back(point);
 
           //4.融合图片
@@ -111,6 +112,38 @@ void PointCloudPreprocess::Process(
   //5.雷达视角
 //  pcl::transformPointCloud(*cloud_out,*cloud_out,exT);
  std::cout << ">>>> Color points nums: " << cloud_out->points.size() << std::endl;
+}
+
+void PointCloudPreprocess::Process(
+    const livox_ros_driver2::CustomMsg::ConstPtr& msg,
+    pcl::PointCloud<PointType>::Ptr& cloud_out,
+    const double last_start_time) {
+  double time_offset =
+      (msg->header.stamp.toSec() - last_start_time) * 1000.0;  // ms
+
+  for (size_t i = 1; i < msg->point_num; ++i) {
+    if ((msg->points[i].line < num_scans_) &&
+        ((msg->points[i].tag & 0x30) == 0x10 ||
+         (msg->points[i].tag & 0x30) == 0x00) &&
+        !HasInf(msg->points[i]) && !HasNan(msg->points[i]) &&
+        !IsNear(msg->points[i], msg->points[i - 1]) &&
+        (i % config_.point_filter_num == 0)) {
+      PointType point;
+      point.normal_x = 0;
+      point.normal_y = 0;
+      point.normal_z = 0;
+      point.x = msg->points[i].x;
+      point.y = msg->points[i].y;
+      point.z = msg->points[i].z;
+      point.r = 255;
+      point.g = 0;
+      point.b = 0;
+      // point.intensity = msg->points[i].reflectivity;
+      point.curvature = time_offset + msg->points[i].offset_time * 1e-6;  // ms
+      cloud_out->push_back(point);
+    }
+  }
+  std::cout << ">>>> Points nums: " << cloud_out->points.size() << std::endl;
 }
 
 void PointCloudPreprocess::Process(
@@ -239,7 +272,6 @@ void PointCloudPreprocess::ProcessOuster(
       point.g = 0;
       point.b = 0;
       // point.intensity = cloud_origin.at(i).intensity;
-      // ms
       point.curvature = cloud_origin.at(i).t * 1e-6; //ms
       cloud_out->push_back(point);
     }

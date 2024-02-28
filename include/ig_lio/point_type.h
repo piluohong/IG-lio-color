@@ -15,26 +15,6 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/kdtree.h>
 
-             
-// struct PointXYZIRGBNormal
-// {
-//     PCL_ADD_POINT4D;
-//     PCL_ADD_INTENSITY;
-//     PCL_ADD_RGB;
-    
-//     float curvature;
-//     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-// }EIGEN_ALIGN16;
-
-// POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIRGBNormal,
-//                                     (float,x,x)
-//                                     (float,y,y)
-//                                     (float,z,z)
-//                                     (float ,intensity,intensity)
-//                                     (uint_32t,rgb,rgb)
-//                                     (float,curvature,curvature))
-
-// using PointType = PointXYZIRGBNormal;
 using PointType = pcl::PointXYZRGBNormal;
 using CloudType = pcl::PointCloud<PointType>;
 using CloudPtr = CloudType::Ptr;

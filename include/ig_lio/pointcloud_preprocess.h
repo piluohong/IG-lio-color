@@ -75,6 +75,25 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(
 //         double, timestamp, timestamp)(uint16_t, reflectivity, reflectivity)(
 //         uint8_t, ring, ring)(uint16_t, noise, noise)(uint32_t, range, range))
 
+struct PointXYZIRGBNormal : public pcl::PointXYZRGBNormal
+{
+    PCL_ADD_INTENSITY;
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+} EIGEN_ALIGN16;
+POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIRGBNormal,
+                                    (float,x,x)
+                                    (float,y,y)
+                                    (float,z,z)
+                                    (float,intensity,intensity)
+                                    (float,normal_x,normal_x)
+                                    (float,normal_y,normal_y)
+                                    (float,normal_z,normal_z)
+                                    (std::uint8_t,r,r)
+                                    (std::uint8_t,g,g)
+                                    (std::uint8_t,b,b)
+                                    (float,curvature,curvature))
+
 class PointCloudPreprocess {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -97,6 +116,10 @@ class PointCloudPreprocess {
   void Process(const livox_ros_driver2::CustomMsg::ConstPtr& msg,
                pcl::PointCloud<PointType>::Ptr& cloud_out,
                cv::Mat image_in,cv::Mat image_out, cv::Mat intrisicMat, Eigen::Affine3f exT,const double last_start_time = 0.0);
+
+  void Process(const livox_ros_driver2::CustomMsg::ConstPtr& msg,
+              pcl::PointCloud<PointType>::Ptr& cloud_out,
+              const double last_start_time = 0.0);
 
   void Process(const sensor_msgs::PointCloud2::ConstPtr& msg,
                pcl::PointCloud<PointType>::Ptr& cloud_out);
