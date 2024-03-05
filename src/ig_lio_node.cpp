@@ -335,24 +335,24 @@ void LivoxCloudCallBack(const livox_ros_driver2::CustomMsg::ConstPtr &msg)
           {
             //提取相机回调函数的结果
            
-            mtx_lidar.lock();
-            image_ros = image_buff.back().first;
-            image_time = image_buff.back().second;
-            // image_buff.pop_back();
-            mtx_lidar.unlock();
+            // mtx_lidar.lock();
+            // image_ros = image_buff.back().first;
+            // image_time = image_buff.back().second;
+            // // image_buff.pop_back();
+            // mtx_lidar.unlock();
             
             
-            ros2cv(image_ros,show_image,intrisic,distCoeffs,false);
-            // ROS_WARN("Debug: %d\n",(int)show_image.empty());
+            // ros2cv(image_ros,show_image,intrisic,distCoeffs,false);
+            // // ROS_WARN("Debug: %d\n",(int)show_image.empty());
 
-            if (show_image.empty()||abs(lidar_timestamp - image_time) > 0.1)
-                      return;
-            image = show_image.clone();
+            // if (show_image.empty()||abs(lidar_timestamp - image_time) > 0.1)
+            //           return;
+            // image = show_image.clone();
           }
 
-          cloud_preprocess_ptr->Process(
-              msg, temp_cloud_ptr, image, show_image, intrisicMat, transOffset, first_scan_timestamp);
-          // cloud_preprocess_ptr->Process(msg, temp_cloud_ptr, first_scan_timestamp);
+          // cloud_preprocess_ptr->Process(
+          //     msg, temp_cloud_ptr, image, show_image, intrisicMat, transOffset, first_scan_timestamp);
+          cloud_preprocess_ptr->Process(msg, temp_cloud_ptr, first_scan_timestamp);
 
           first_scan_flag = true;
           last_lidar_timestamp = lidar_timestamp;
@@ -362,12 +362,12 @@ void LivoxCloudCallBack(const livox_ros_driver2::CustomMsg::ConstPtr &msg)
           temp_cloud_ptr->clear();
 
             //6.发布融合图片
-            cv_bridge::CvImage bridge;
-            bridge.image = show_image;
-            bridge.encoding = "rgb8";
-            sensor_msgs::Image::Ptr imageShowPointer = bridge.toImageMsg();
-            imageShowPointer->header.stamp = ros::Time::now();
-           fusion_image_pub.publish(imageShowPointer);
+          //   cv_bridge::CvImage bridge;
+          //   bridge.image = show_image;
+          //   bridge.encoding = "rgb8";
+          //   sensor_msgs::Image::Ptr imageShowPointer = bridge.toImageMsg();
+          //   imageShowPointer->header.stamp = ros::Time::now();
+          //  fusion_image_pub.publish(imageShowPointer);
         }
       },
       "Cloud Preprocess (Livox)");
@@ -817,7 +817,7 @@ int main(int argc, char **argv)
   ros::Subscriber image_sub;
   if (lidar_type == LidarType::LIVOX)
   {
-    image_sub = nh.subscribe("/camera/image", 10000, ImageCallback,ros::TransportHints().tcpNoDelay());
+    // image_sub = nh.subscribe("/camera/image", 10000, ImageCallback,ros::TransportHints().tcpNoDelay());
     cloud_sub = nh.subscribe(lidar_topic, 10000, LivoxCloudCallBack,ros::TransportHints().tcpNoDelay());
   }
   else

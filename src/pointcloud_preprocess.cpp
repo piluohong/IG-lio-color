@@ -133,9 +133,12 @@ void PointCloudPreprocess::Process(
       point.x = msg->points[i].x;
       point.y = msg->points[i].y;
       point.z = msg->points[i].z;
-      point.r = 255;
-      point.g = 0;
-      point.b = 0;
+      float dist,r,g,b;
+      dist = pointDistance(point);
+      getColor(dist,50,r,g,b);
+      point.r = r;
+      point.g = g;
+      point.b = b;
       // point.intensity = msg->points[i].reflectivity;
       point.curvature = time_offset + msg->points[i].offset_time * 1e-6;  // ms
       cloud_out->push_back(point);
