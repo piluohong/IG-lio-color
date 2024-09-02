@@ -14,7 +14,7 @@ Dataset : hku_main_building
 Dataset: hku_park_00
 ![Alt text](figures/hku_park_00.png)
 
-//原作者README.md
+# Abstract
 This work proposes an incremental Generalized Iterative Closest Point (GICP) based tightly-coupled LiDAR-inertial odometry (LIO), iG-LIO, which addresses the challenges of integrating GICP into real-time LIO. The main contributions are as follows.
 
 - The raw GICP constraints are tightly-coupled with IMU constraints in a Maximum A Posteriori (MAP) estimation.
