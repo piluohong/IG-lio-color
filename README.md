@@ -1,13 +1,13 @@
 # iG-LIO-color
 
 ## 感谢ig-lio作者的开源
-#本项工作 基于ig-lio紧耦合激光惯性里程计包构建彩色点云地图，未进行严格的时间同步。
+### 本项工作 基于ig-lio紧耦合激光惯性里程计包构建彩色点云地图，未进行严格的时间同步。
 
-#TODO
+### TODO
 ·增加后端优化；
 ·严格激光帧和相机帧的同步时间；
 
-#测试效果
+### 测试效果
 Dataset : hku_main_building
 ![Alt text](figures/hku_main_building.png)
 ![Alt text](figures/hku_main_building_2.png)
